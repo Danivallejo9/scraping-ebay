@@ -7,38 +7,49 @@ Original file is located at
     https://colab.research.google.com/drive/1AshFR_9-O2SJEBX0ZOD5csq8aWxTEkDB
 """
 
-# scraping_ebay.py
 from selenium import webdriver
-import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 import pandas as pd
-from selenium.webdriver.common.by import By  # Importa By para usar con find_element y find_elements
+import time
 
 def main_function():
-    # Configuración y scraping de eBay
-    driver = webdriver.Chrome()
+    # Configuración del navegador en modo headless
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Modo headless para CI/CD
+    chrome_options.add_argument("--no-sandbox")  # Requerido para entornos de CI/CD
+    chrome_options.add_argument("--disable-dev-shm-usage")  # Mejora estabilidad en contenedores
+    chrome_options.add_argument("--disable-gpu")  # Opcional en entornos gráficos
+    driver = webdriver.Chrome(options=chrome_options)
+
+    # URL base de scraping
     driver.get('https://www.ebay.com/sch/i.html?_nkw=smartwatch')
 
+    # Pausa para cargar elementos
     time.sleep(5)
 
+    # Inicialización de listas para almacenar los resultados
     productos = []
     precios = []
 
     while True:
-        # Usa By para localizar los elementos
-        items = driver.find_elements(By.CSS_SELECTOR, '.s-item__title')  # Actualizado
-        prices = driver.find_elements(By.CSS_SELECTOR, '.s-item__price')  # Actualizado
-        
+        # Localiza los elementos de productos y precios
+        items = driver.find_elements(By.CSS_SELECTOR, '.s-item__title') 
+        prices = driver.find_elements(By.CSS_SELECTOR, '.s-item__price') 
+
         for item, price in zip(items, prices):
             productos.append(item.text)
             precios.append(price.text)
 
+        # Intenta pasar a la página siguiente
         try:
-            # Encuentra el botón "Siguiente" y haz clic
-            next_button = driver.find_element(By.CSS_SELECTOR, '.pagination__next')  # Actualizado
+            next_button = driver.find_element(By.CSS_SELECTOR, '.pagination__next')  # Botón "Siguiente"
             next_button.click()
-            time.sleep(5)
+            time.sleep(5)  # Pausa para que la página cargue
         except Exception as e:
-            break  # Sale si no hay más páginas
+            # Sale del bucle si no hay más páginas
+            print("No hay más páginas. Finalizando scraping.")
+            break
 
     # Cierra el navegador
     driver.quit()
