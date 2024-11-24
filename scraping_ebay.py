@@ -7,55 +7,87 @@ Original file is located at
     https://colab.research.google.com/drive/1AshFR_9-O2SJEBX0ZOD5csq8aWxTEkDB
 """
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-import pandas as pd
+
+
 import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+import chromedriver_autoinstaller
+import pandas as pd
 
-def main_function():
-    # Configuración del navegador en modo headless
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Modo headless para CI/CD
-    chrome_options.add_argument("--no-sandbox")  # Requerido para entornos de CI/CD
-    chrome_options.add_argument("--disable-dev-shm-usage")  # Mejora estabilidad en contenedores
-    chrome_options.add_argument("--disable-gpu")  # Opcional en entornos gráficos
-    driver = webdriver.Chrome(options=chrome_options)
+# Instalar automáticamente el ChromeDriver
+chromedriver_autoinstaller.install()
 
-    # URL base de scraping
-    driver.get('https://www.ebay.com/sch/i.html?_nkw=smartwatch')
+# Configuración del navegador
+options = webdriver.ChromeOptions()
+options.add_argument('--headless')  # Modo sin cabeza (sin interfaz gráfica)
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
 
-    # Pausa para cargar elementos
-    time.sleep(5)
+# Inicializar el servicio
+service = Service()
+driver = webdriver.Chrome(service=service, options=options)
 
-    # Inicialización de listas para almacenar los resultados
-    productos = []
-    precios = []
+# Acceder a la página de eBay
+driver.get('https://www.ebay.com/sch/i.html?_nkw=smartwatch')
 
-    while True:
-        # Localiza los elementos de productos y precios
-        items = driver.find_elements(By.CSS_SELECTOR, '.s-item__title') 
-        prices = driver.find_elements(By.CSS_SELECTOR, '.s-item__price') 
+# Verificar si la página se cargó correctamente
+if driver.title:
+    print("Página cargada correctamente")
+else:
+    print("Error al cargar la página")
+    driver.quit()  # Si no se carga, cerramos el navegador
+    exit()  # Salimos del script
 
-        for item, price in zip(items, prices):
-            productos.append(item.text)
-            precios.append(price.text)
+# Esperar a que se cargue la página inicial
+time.sleep(5)
 
-        # Intenta pasar a la página siguiente
-        try:
-            next_button = driver.find_element(By.CSS_SELECTOR, '.pagination__next')  # Botón "Siguiente"
-            next_button.click()
-            time.sleep(5)  # Pausa para que la página cargue
-        except Exception as e:
-            # Sale del bucle si no hay más páginas
-            print("No hay más páginas. Finalizando scraping.")
-            break
+# Listas para almacenar los resultados
+productos = []
+precios = []
 
-    # Cierra el navegador
-    driver.quit()
+# Extraer datos de las páginas
+while True:
+    # Extraer elementos en la página actual
+    items = driver.find_elements(By.CSS_SELECTOR, '.s-item__title')
+    prices = driver.find_elements(By.CSS_SELECTOR, '.s-item__price')
 
-    # Devuelve los datos en formato DataFrame
-    return pd.DataFrame({
-        'Producto': productos,
-        'Precio': precios
-    })
+    # Guardar los datos en las listas
+    for item, price in zip(items, prices):
+        productos.append(item.text)
+        precios.append(price.text)
+
+    # Navegar a la siguiente página
+    try:
+        # Encontrar el botón "Siguiente" y hacer clic
+        next_button = driver.find_element(By.CSS_SELECTOR, '.pagination__next')
+        next_button.click()
+
+        # Esperar a que la siguiente página se cargue
+        time.sleep(5)
+    except Exception as e:
+        print(f"No se puede ir a la siguiente página: {e}")
+        break  # Salir si no hay más páginas
+
+# Convertir los resultados a un DataFrame
+smartwatch = pd.DataFrame({
+    'Producto': productos,
+    'Precio': precios
+})
+
+# Mostrar el DataFrame
+print(smartwatch)
+
+# Exportar a un archivo CSV
+smartwatch.to_csv('ebay_smartwatches.csv', index=False)
+
+# Cerrar el navegador
+driver.quit()
+
+# Mostrar la información del DataFrame
+smartwatch.info()
+
+# Mostrar los primeros datos del DataFrame
+print(smartwatch.head())
