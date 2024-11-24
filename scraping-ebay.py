@@ -33,14 +33,6 @@ driver = webdriver.Chrome(service=service, options=options)
 # Acceder a la página de eBay
 driver.get('https://www.ebay.com/sch/i.html?_nkw=smartwatch')
 
-# Verificar si la página se cargó correctamente
-if driver.title:
-    print("Página cargada correctamente")
-else:
-    print("Error al cargar la página")
-    driver.quit()  # Si no se carga, cerramos el navegador
-    exit()  # Salimos del script
-
 # Esperar a que se cargue la página inicial
 time.sleep(5)
 
@@ -86,8 +78,6 @@ smartwatch.to_csv('ebay_smartwatches.csv', index=False)
 # Cerrar el navegador
 driver.quit()
 
-# Mostrar la información del DataFrame
 smartwatch.info()
 
-# Mostrar los primeros datos del DataFrame
-print(smartwatch.head())
+smartwatch
