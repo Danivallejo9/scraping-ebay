@@ -7,13 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1AshFR_9-O2SJEBX0ZOD5csq8aWxTEkDB
 """
 
-# Instalamos Selenium y ChromeDriver
-!pip install selenium chromedriver-autoinstaller
-!apt-get update
-!apt install -y chromium-chromedriver
-!cp /usr/lib/chromium-browser/chromedriver /usr/bin/
-!pip install requests
-
 import time
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
