@@ -26,58 +26,39 @@ options.add_argument('--headless')  # Modo sin cabeza (sin interfaz gráfica)
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 
-# Inicializar el servicio
-service = Service()
-driver = webdriver.Chrome(service=service, options=options)
+def main_function():
+    # Configuración y scraping de eBay
+    service = Service()
+    driver = webdriver.Chrome(service=service, options=options)
 
-# Acceder a la página de eBay
-driver.get('https://www.ebay.com/sch/i.html?_nkw=smartwatch')
+    # Acceder a la página de eBay
+    driver.get('https://www.ebay.com/sch/i.html?_nkw=smartwatch')
 
-# Esperar a que se cargue la página inicial
-time.sleep(5)
+    time.sleep(5)
 
-# Listas para almacenar los resultados
-productos = []
-precios = []
+    productos = []
+    precios = []
 
-# Extraer datos de las páginas
-while True:
-    # Extraer elementos en la página actual
-    items = driver.find_elements(By.CSS_SELECTOR, '.s-item__title')
-    prices = driver.find_elements(By.CSS_SELECTOR, '.s-item__price')
+    while True:
+        items = driver.find_elements(By.CSS_SELECTOR, '.s-item__title')
+        prices = driver.find_elements(By.CSS_SELECTOR, '.s-item__price')
+        
+        for item, price in zip(items, prices):
+            productos.append(item.text)
+            precios.append(price.text)
 
-    # Guardar los datos en las listas
-    for item, price in zip(items, prices):
-        productos.append(item.text)
-        precios.append(price.text)
+        try:
+           next_button = driver.find_element(By.CSS_SELECTOR, '.pagination__next')
+           next_button.click()
+           time.sleep(5)
+        except Exception as e:
+            break
 
-    # Navegar a la siguiente página
-    try:
-        # Encontrar el botón "Siguiente" y hacer clic
-        next_button = driver.find_element(By.CSS_SELECTOR, '.pagination__next')
-        next_button.click()
+    # Cierra el navegador
+    driver.quit()
 
-        # Esperar a que la siguiente página se cargue
-        time.sleep(5)
-    except Exception as e:
-        print(f"No se puede ir a la siguiente página: {e}")
-        break  # Salir si no hay más páginas
-
-# Convertir los resultados a un DataFrame
-smartwatch = pd.DataFrame({
-    'Producto': productos,
-    'Precio': precios
-})
-
-# Mostrar el DataFrame
-print(smartwatch)
-
-# Exportar a un archivo CSV
-smartwatch.to_csv('ebay_smartwatches.csv', index=False)
-
-# Cerrar el navegador
-driver.quit()
-
-smartwatch.info()
-
-smartwatch
+    # Devuelve los datos en formato DataFrame
+    return pd.DataFrame({
+        'Producto': productos,
+        'Precio': precios
+    })
