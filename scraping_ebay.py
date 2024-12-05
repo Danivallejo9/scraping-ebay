@@ -58,10 +58,7 @@ def main_function():
     driver.quit()
 
     # Devuelve los datos en formato DataFrame
-    data = pd.DataFrame({
+    return pd.DataFrame({
         'Producto': productos,
         'Precio': precios
     })
-
-    data.to_csv('smartwatches.csv', index=False)
-    return data
